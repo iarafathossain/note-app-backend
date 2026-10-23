@@ -1,12 +1,15 @@
 import { Server } from "http";
 import app from "./app.js";
+import { connectDB, disconnectDB } from "./config/database.js";
 import { envVariables } from "./config/env.js";
 
 let server: Server;
 
 const main = async () => {
   try {
+    await connectDB();
     console.log("✅Database connected successfully.");
+
     server = app.listen(envVariables.PORT, () => {
       console.log(`Server is running on port ${envVariables.PORT}`);
     });
@@ -16,46 +19,37 @@ const main = async () => {
   }
 };
 
-// SIGTERM Signal Handler for graceful shutdown
-process.on("SIGTERM", () => {
-  console.log("SIGTERM signal received: closing HTTP server");
-  if (server) {
-    server.close(() => {
-      console.log("✅HTTP server closed");
-      process.exit(0);
-    });
-  } else {
-    process.exit(0);
-  }
-});
+// Close the HTTP server first, then the DB connection, then exit
+const shutdown = async (reason: string, exitCode: number) => {
+  console.log(`${reason}: closing HTTP server`);
 
-// SIGINT Signal Handler for graceful shutdown
-process.on("SIGINT", () => {
-  console.log("SIGINT signal received: closing HTTP server");
-  if (server) {
-    server.close(() => {
-      console.log("✅HTTP server closed");
-      process.exit(0);
+  const closeServer = () =>
+    new Promise<void>((resolve) => {
+      if (!server) return resolve();
+      server.close(() => {
+        console.log("✅HTTP server closed");
+        resolve();
+      });
     });
-  } else {
-    process.exit(0);
-  }
-});
 
-// UNCAUGHT EXCEPTION Handler for graceful shutdown
+  try {
+    await closeServer();
+    await disconnectDB();
+    console.log("✅Database disconnected");
+  } catch (err) {
+    console.error("❌Error during shutdown:", err);
+    exitCode = 1;
+  } finally {
+    process.exit(exitCode);
+  }
+};
+
+process.on("SIGTERM", () => shutdown("SIGTERM signal received", 0));
+process.on("SIGINT", () => shutdown("SIGINT signal received", 0));
+
 process.on("uncaughtException", (err) => {
   console.error("❌Uncaught Exception:", err);
-  if (server) {
-    server.close(() => {
-      console.log("✅HTTP server closed due to uncaught exception");
-      process.exit(1);
-    });
-  } else {
-    process.exit(1);
-  }
+  shutdown("Uncaught exception", 1);
 });
-
-// process.exit(0); // For testing graceful shutdown with SIGINT or SIGTERM
-// process.exit(1); // For testing graceful shutdown with uncaughtException
 
 main();
