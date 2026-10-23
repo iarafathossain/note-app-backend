@@ -16,9 +16,9 @@ const requireUser = (user: AuthenticatedUser | undefined) => {
   return user;
 };
 
-const getOwnedFilter = (user: AuthenticatedUser, noteId: string) => ({
-  _id: noteId,
-  userId: user.userId,
+const getNoteFilter = (user: AuthenticatedUser, noteId?: string) => ({
+  ...(noteId ? { _id: noteId } : {}),
+  ...(user.role === UserRole.USER ? { userId: user.userId } : {}),
 });
 
 export const createNote = async (
@@ -39,10 +39,7 @@ export const listNotes = async (
   limit: number,
 ) => {
   const authenticatedUser = requireUser(user);
-  const filter =
-    authenticatedUser.role === UserRole.ADMIN
-      ? {}
-      : { userId: authenticatedUser.userId };
+  const filter = getNoteFilter(authenticatedUser);
   const { skip } = getPagination(page, limit);
   const [notes, total] = await Promise.all([
     NoteModel.find(filter)
@@ -56,13 +53,13 @@ export const listNotes = async (
   return { notes, total };
 };
 
-const findOwnedNote = async (
+const findNote = async (
   user: AuthenticatedUser | undefined,
   noteId: string,
 ) => {
   const authenticatedUser = requireUser(user);
   const note = await NoteModel.findOne(
-    getOwnedFilter(authenticatedUser, noteId),
+    getNoteFilter(authenticatedUser, noteId),
   ).lean();
   if (!note) {
     throw new AppError(status.NOT_FOUND, "Note not found.");
@@ -70,7 +67,7 @@ const findOwnedNote = async (
   return note;
 };
 
-export const getNote = findOwnedNote;
+export const getNote = findNote;
 
 export const updateNote = async (
   user: AuthenticatedUser | undefined,
@@ -79,7 +76,7 @@ export const updateNote = async (
 ) => {
   const authenticatedUser = requireUser(user);
   const note = await NoteModel.findOneAndUpdate(
-    getOwnedFilter(authenticatedUser, noteId),
+    getNoteFilter(authenticatedUser, noteId),
     { $set: input },
     { new: true, runValidators: true },
   ).lean();
@@ -95,7 +92,7 @@ export const deleteNote = async (
 ) => {
   const authenticatedUser = requireUser(user);
   const result = await NoteModel.deleteOne(
-    getOwnedFilter(authenticatedUser, noteId),
+    getNoteFilter(authenticatedUser, noteId),
   );
   if (result.deletedCount === 0) {
     throw new AppError(status.NOT_FOUND, "Note not found.");

@@ -32,26 +32,35 @@ const validateRequestPart =
 const router = Router();
 const authenticated = [authenticate, authorize(UserRole.USER, UserRole.ADMIN)];
 
-router.use(...authenticated);
-router.post("/", validateRequest(noteBodySchema), catchAsync(create));
+router.post(
+  "/",
+  authenticate,
+  authorize(UserRole.USER),
+  validateRequest(noteBodySchema),
+  catchAsync(create),
+);
 router.get(
   "/",
+  ...authenticated,
   validateRequestPart("query", paginationSchema),
   catchAsync(list),
 );
 router.get(
   "/:id",
+  ...authenticated,
   validateRequestPart("params", noteIdSchema),
   catchAsync(get),
 );
 router.patch(
   "/:id",
+  ...authenticated,
   validateRequestPart("params", noteIdSchema),
   validateRequest(updateNoteSchema),
   catchAsync(update),
 );
 router.delete(
   "/:id",
+  ...authenticated,
   validateRequestPart("params", noteIdSchema),
   catchAsync(remove),
 );
