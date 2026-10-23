@@ -3,11 +3,13 @@ import "dotenv/config";
 interface IEnvConfig {
   DATABASE_URL: string;
   PORT: String;
+  NODE_ENV: "development" | "production" | "staging";
+  FRONTEND_URL: string;
 }
 
 const loadEnvironmentVariables = (): IEnvConfig => {
   // required environment variables
-  const requiredEnvVars = ["DATABASE_URL", "PORT"];
+  const requiredEnvVars = ["DATABASE_URL", "PORT", "NODE_ENV", "FRONTEND_URL"];
 
   requiredEnvVars.forEach((variable) => {
     if (!process.env[variable]) {
@@ -20,6 +22,8 @@ const loadEnvironmentVariables = (): IEnvConfig => {
   return {
     DATABASE_URL: process.env.DATABASE_URL!,
     PORT: process.env.PORT!,
+    NODE_ENV: process.env.NODE_ENV! as "development" | "production" | "staging",
+    FRONTEND_URL: process.env.FRONTEND_URL!,
   };
 };
 

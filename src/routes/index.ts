@@ -5,4 +5,4 @@ const router = Router();
 
 router.use("/auth", authRoutes);
 
-export default router;
+export const indexRoutes = router;
