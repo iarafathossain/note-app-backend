@@ -30,8 +30,8 @@ export const create = async (req: Request, res: Response) => {
 };
 
 export const list = async (req: Request, res: Response) => {
-  const page = Number(req.query.page);
-  const limit = Number(req.query.limit);
+  const page = Number(req.query.page ?? 1);
+  const limit = Number(req.query.limit ?? 10);
   const result = await listNotes(req.user, page, limit);
   sendResponse(res, {
     httpStatusCode: status.OK,
