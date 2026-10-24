@@ -3,6 +3,7 @@
 Express and MongoDB API for the Note App.
 
 **Live API:** https://note-api.iarafathossain.me
+**Deployed** at AWS EC2 with MongoDB Atlas, Nginx reverse proxy, and PM2 process manager.
 
 ## Tech stack
 
