@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import status from "http-status";
+import AppError from "../../errors/app-error.js";
 import { sendResponse } from "../../shared/send-response.js";
 import { cookieUtils } from "../../utils/cookie.js";
 import { tokenUtils } from "../../utils/token.js";
@@ -9,6 +10,27 @@ import {
   registerUser,
   revokeRefreshSession,
 } from "./auth.service.js";
+
+export const me = async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new AppError(status.UNAUTHORIZED, "Authentication required.");
+  }
+
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: "Current user retrieved successfully.",
+    data: {
+      user: {
+        _id: req.user.userId,
+        name: req.user.name,
+        email: req.user.email,
+        role: req.user.role,
+        createdAt: req.user.createdAt,
+      },
+    },
+  });
+};
 
 export const register = async (req: Request, res: Response) => {
   const result = await registerUser(req.body);
