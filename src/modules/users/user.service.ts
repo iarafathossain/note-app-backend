@@ -5,6 +5,7 @@ import type { z } from "zod";
 import AppError from "../../errors/app-error.js";
 import { SessionModel } from "../sessions/session.model.js";
 import { UserModel } from "./user.model.js";
+import { getPagination } from "../../utils/pagination.js";
 import {
   createUserSchema,
   updateUserSchema,
@@ -37,6 +38,39 @@ const toSafeUser = (user: {
 
 const duplicateEmailError = () =>
   new AppError(status.CONFLICT, "An account with this email already exists.");
+
+const escapeRegex = (value: string) =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+export const listUsers = async (
+  currentUserId: string,
+  page: number,
+  limit: number,
+  search?: string,
+) => {
+  const filter = {
+    _id: { $ne: currentUserId },
+    ...(search
+      ? {
+          $or: [
+            { name: { $regex: escapeRegex(search), $options: "i" } },
+            { email: { $regex: escapeRegex(search), $options: "i" } },
+          ],
+        }
+      : {}),
+  };
+  const { skip } = getPagination(page, limit);
+  const [users, total] = await Promise.all([
+    UserModel.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    UserModel.countDocuments(filter),
+  ]);
+
+  return { users: users.map(toSafeUser), total };
+};
 
 export const createUser = async (input: CreateUserInput) => {
   try {

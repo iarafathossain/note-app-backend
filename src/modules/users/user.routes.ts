@@ -7,12 +7,14 @@ import { catchAsync } from "../../shared/catch-async.js";
 import {
   create,
   getGroupedByInterests,
+  list,
   remove,
   update,
 } from "./user.controller.js";
 import { UserRole } from "./user.model.js";
 import {
   createUserSchema,
+  userListQuerySchema,
   updateUserSchema,
   userIdSchema,
 } from "./user.validation.js";
@@ -25,6 +27,13 @@ router.post(
   authorize(UserRole.ADMIN),
   validateRequest(createUserSchema),
   catchAsync(create),
+);
+router.get(
+  "/",
+  authenticate,
+  authorize(UserRole.ADMIN),
+  validateRequestPart("query", userListQuerySchema),
+  catchAsync(list),
 );
 router.patch(
   "/:id",
