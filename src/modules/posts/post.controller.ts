@@ -11,6 +11,7 @@ import {
   listPosts,
   updatePost,
 } from "./post.service.js";
+import type { PostListQuery } from "./post.validation.js";
 
 const getParam = (req: Request, key: string) => {
   const value = req.params[key];
@@ -31,9 +32,8 @@ export const create = async (req: Request, res: Response) => {
 };
 
 export const list = async (req: Request, res: Response) => {
-  const page = Number(req.query.page ?? 1);
-  const limit = Number(req.query.limit ?? 10);
-  const result = await listPosts(page, limit);
+  const { page, limit, search } = req.query as unknown as PostListQuery;
+  const result = await listPosts(page, limit, search);
   sendResponse(res, {
     httpStatusCode: status.OK,
     success: true,

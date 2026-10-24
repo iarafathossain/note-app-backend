@@ -22,6 +22,9 @@ const getPostFilter = (user: AuthenticatedUser, postId?: string) => ({
   ...(user.role === UserRole.USER ? { userId: user.userId } : {}),
 });
 
+const escapeRegex = (value: string) =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 export const createPost = async (
   user: AuthenticatedUser | undefined,
   input: { title: string; content: string },
@@ -34,11 +37,27 @@ export const createPost = async (
   });
 };
 
-export const listPosts = async (page: number, limit: number) => {
+export const listPosts = async (
+  page: number,
+  limit: number,
+  search?: string,
+) => {
   const { skip } = getPagination(page, limit);
+  const filter = search
+    ? {
+        $or: [
+          { title: { $regex: escapeRegex(search), $options: "i" } },
+          { content: { $regex: escapeRegex(search), $options: "i" } },
+        ],
+      }
+    : {};
   const [posts, total] = await Promise.all([
-    PostModel.find({}).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
-    PostModel.countDocuments({}),
+    PostModel.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    PostModel.countDocuments(filter),
   ]);
   return { posts, total };
 };
