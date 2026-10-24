@@ -10,6 +10,7 @@ import {
   listNotes,
   updateNote,
 } from "./note.service.js";
+import type { NoteListQuery } from "./note.validation.js";
 
 const getNoteId = (req: Request) => {
   const { id } = req.params;
@@ -30,9 +31,8 @@ export const create = async (req: Request, res: Response) => {
 };
 
 export const list = async (req: Request, res: Response) => {
-  const page = Number(req.query.page ?? 1);
-  const limit = Number(req.query.limit ?? 10);
-  const result = await listNotes(req.user, page, limit);
+  const { page, limit, search } = req.query as unknown as NoteListQuery;
+  const result = await listNotes(req.user, page, limit, search);
   sendResponse(res, {
     httpStatusCode: status.OK,
     success: true,

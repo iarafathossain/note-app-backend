@@ -21,6 +21,9 @@ const getNoteFilter = (user: AuthenticatedUser, noteId?: string) => ({
   ...(user.role === UserRole.USER ? { userId: user.userId } : {}),
 });
 
+const escapeRegex = (value: string) =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 export const createNote = async (
   user: AuthenticatedUser | undefined,
   input: { title: string; content: string },
@@ -37,9 +40,20 @@ export const listNotes = async (
   user: AuthenticatedUser | undefined,
   page: number,
   limit: number,
+  search?: string,
 ) => {
   const authenticatedUser = requireUser(user);
-  const filter = getNoteFilter(authenticatedUser);
+  const filter = {
+    ...getNoteFilter(authenticatedUser),
+    ...(search
+      ? {
+          $or: [
+            { title: { $regex: escapeRegex(search), $options: "i" } },
+            { content: { $regex: escapeRegex(search), $options: "i" } },
+          ],
+        }
+      : {}),
+  };
   const { skip } = getPagination(page, limit);
   const [notes, total] = await Promise.all([
     NoteModel.find(filter)
