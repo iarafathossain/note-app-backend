@@ -4,6 +4,20 @@ Express and MongoDB API for the Note App.
 
 **Live API:** https://note-api.iarafathossain.me
 
+## Demo Accounts
+
+Use the following credentials to test the application:
+
+### Admin
+
+- **Email:** `maruf@gmail.com`
+- **Password:** `12345678`
+
+### User
+
+- **Email:** `arafat@gmail.com`
+- **Password:** `12345678`
+
 ## Deployment
 
 Deployed at AWS EC2 with MongoDB Atlas, Nginx reverse proxy, and PM2 process manager.
